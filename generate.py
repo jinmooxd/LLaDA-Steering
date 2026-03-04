@@ -160,7 +160,27 @@ def main():
     input_ids = encoded_outputs['input_ids'].to(device)
     attention_mask = encoded_outputs['attention_mask'].to(device)
 
-    out = generate(model, input_ids, attention_mask, steps=128, gen_length=128, block_length=32, temperature=0., cfg_scale=0., remasking='low_confidence')
+    # Choose generation settings based on device.
+    # On GPU: full settings from the paper example.
+    # On CPU: lighter settings so tests complete in reasonable time.
+    if device == 'cuda':
+        steps = 128
+        gen_length = 128
+    else:
+        steps = 16
+        gen_length = 32
+
+    out = generate(
+        model,
+        input_ids,
+        attention_mask,
+        steps=steps,
+        gen_length=gen_length,
+        block_length=32,   # must divide gen_length
+        temperature=0.,
+        cfg_scale=0.,
+        remasking='low_confidence',
+    )
     output = tokenizer.batch_decode(out[:, input_ids.shape[1]:], skip_special_tokens=True)
     for o in output:
         print(o)
