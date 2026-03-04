@@ -121,9 +121,18 @@ def generate(model, prompt, attention_mask=None, steps=128, gen_length=128, bloc
 
 
 def main():
-    device = 'cuda'
+    # Select device based on CUDA availability.
+    # On your Mac, this will use CPU and avoid CUDA errors.
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    model = AutoModel.from_pretrained('GSAI-ML/LLaDA-8B-Instruct', trust_remote_code=True, torch_dtype=torch.bfloat16).to(device).eval()
+    # Use bfloat16 on GPU, float32 on CPU.
+    dtype = torch.bfloat16 if device == 'cuda' else torch.float32
+
+    model = AutoModel.from_pretrained(
+        'GSAI-ML/LLaDA-8B-Instruct',
+        trust_remote_code=True,
+        torch_dtype=dtype,
+    ).to(device).eval()
     tokenizer = AutoTokenizer.from_pretrained('GSAI-ML/LLaDA-8B-Instruct', trust_remote_code=True)
 
     # The LLaDA architecture theoretically supports both left-padding and right-padding. 
