@@ -78,17 +78,25 @@ def get_log_likelihood(model, prompt, answer, mc_num=128, batch_size=16, cfg_sca
 
 
 def main():
-    device = 'cuda'
+    # Select device based on CUDA availability.
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    model = AutoModel.from_pretrained('GSAI-ML/LLaDA-8B-Base', trust_remote_code=True, torch_dtype=torch.bfloat16).to(device).eval()
+    # Use bfloat16 on GPU, float32 on CPU (to avoid dtype issues on CPU).
+    dtype = torch.bfloat16 if device == 'cuda' else torch.float32
+
+    model = AutoModel.from_pretrained(
+        'GSAI-ML/LLaDA-8B-Base',
+        trust_remote_code=True,
+        torch_dtype=dtype,
+    ).to(device).eval()
     tokenizer = AutoTokenizer.from_pretrained('GSAI-ML/LLaDA-8B-Base', trust_remote_code=True)
 
     # this prompt and answer is from Hellaswag dataset
     prompt = 'Roof shingle removal: A man is sitting on a roof. He'
     answer = ' is using wrap to wrap a pair of skis.'
 
-    prompt = torch.tensor(tokenizer(prompt)['input_ids']).to(device)
-    answer = torch.tensor(tokenizer(answer)['input_ids']).to(device)
+    prompt = torch.tensor(tokenizer(prompt)['input_ids'], dtype=torch.long).to(device)
+    answer = torch.tensor(tokenizer(answer)['input_ids'], dtype=torch.long).to(device)
     print(get_log_likelihood(model, prompt, answer, mc_num=128))
 
 
