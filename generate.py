@@ -62,6 +62,8 @@ def generate(model, prompt, attention_mask=None, steps=128, gen_length=128, bloc
 
     if attention_mask is not None:
         attention_mask = torch.cat([attention_mask, torch.ones((prompt.shape[0], gen_length), dtype=attention_mask.dtype, device=model.device)], dim=-1)
+    else:
+        attention_mask = None
 
     prompt_index = (x != mask_id)
 
@@ -82,6 +84,8 @@ def generate(model, prompt, attention_mask=None, steps=128, gen_length=128, bloc
                 x_ = torch.cat([x, un_x], dim=0)
                 if attention_mask is not None:
                     attention_mask_ = torch.cat([attention_mask, attention_mask], dim=0)
+                else:
+                    attention_mask_ = None
                 logits = model(x_, attention_mask=attention_mask_).logits
                 logits, un_logits = torch.chunk(logits, 2, dim=0)
                 logits = un_logits + (cfg_scale + 1) * (logits - un_logits)
